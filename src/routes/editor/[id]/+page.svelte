@@ -60,7 +60,7 @@
 
   async function saveAndPrint() {
     const saved = await save();
-    if (saved) goto(`/print/${saved.id}`);
+    if (saved) goto(`/print?ids=${saved.id}`);
   }
 
   function addSection() {

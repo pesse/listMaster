@@ -48,14 +48,47 @@ Instanzen einer Vorlage -- ohne Schemabruch moeglich: ein Lauf referenziert
 **alle** IDs neu vergeben werden (`duplicateTemplate`), sonst sind Laeufe
 nicht mehr eindeutig zuzuordnen.
 
-### Drucken
+### Drucken: Streifen, keine Ganzseiten
 
-`/print/[id]` rendert einen A4-Bogen und ruft `window.print()` auf -- das
-oeffnet den echten Windows-Druckdialog inklusive "Als PDF speichern".
-Bedienelemente tragen `.no-print`. In `print.css` sind die zwei Regeln
-wichtig, die den Unterschied machen: `break-inside: avoid` auf `li` (ein
-Punkt wird nie ueber den Seitenumbruch zerrissen) und `break-after: avoid`
-auf `h2` (eine Abschnittsueberschrift steht nie allein am Seitenende).
+Gedruckt wird nicht eine Vorlage pro Seite, sondern ein **Bogen mit
+mehreren schmalen Streifen**, die nach dem Druck ausgeschnitten werden.
+Jeder Streifen traegt eine eigene Vorlage -- verschiedene Listen oder
+dieselbe mehrfach. Der Grund: die realen Listen sind kurz (die erste hatte
+10 Punkte), eine A4-Seite pro Liste waere fast leer.
+
+Die Route ist `/print?ids=a,b,a&cols=3`. Der Bogen steht vollstaendig in
+der URL, damit er nachladbar und als Lesezeichen wiederverwendbar ist;
+wiederholte IDs sind ein gewollter Fall, kein Fehler.
+
+Den Umbruch macht CSS (`columns` auf `.strips`), nicht der Code. Jeder
+Streifen ist nur so hoch wie sein Inhalt und fliesst in die Spalten.
+Die drei Regeln in `print.css`, auf die es ankommt:
+
+- `break-inside: avoid` auf `.strip` -- ein Streifen wird nie ueber
+  Spalten oder Seiten zerrissen, sonst waere er nicht am Stueck
+  ausschneidbar.
+- `column-rule` plus `min-height: calc(297mm - 2cm)` auf `.strips` -- die
+  senkrechte Schnittfuehrung laeuft bis zum Blattrand durch statt dort zu
+  enden, wo der Inhalt aufhoert.
+- `border-bottom` auf **jedem** `.strip`, ohne `:last-child`-Ausnahme --
+  auch der letzte Streifen braucht seine Schnittkante.
+
+`src/lib/print/layout.ts` haelt dieselben Masse in Millimetern, aber nur
+zur Warnung: `fitsInColumn()` meldet, wenn eine Liste zu lang fuer eine
+Spalte ist und der Umbruch sie zerreissen wuerde. Diese Zahlen steuern den
+Druck nicht -- wer `print.css` aendert, muss sie mitziehen.
+
+**Druckbild pruefen, nicht erraten.** Das Layout laesst sich aus WSL heraus
+echt rendern, ohne die App zu starten:
+
+```bash
+npm run print:preview -- 3 5 /tmp/sheet.pdf   # Spalten, Streifen, Ziel
+```
+
+`scripts/print-preview.mjs` zieht die echten Vorlagen aus dem
+AppData-Verzeichnis und rendert sie mit headless Chrome. Die PDF ist direkt
+lesbar (Read-Tool). Markup und Stylesheet sind dieselben wie in der Route --
+wer die Route aendert, zieht das Skript mit.
 
 ## Umgebung: Windows startet die App, WSL editiert sie
 

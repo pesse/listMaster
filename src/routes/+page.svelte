@@ -65,7 +65,7 @@
             </div>
           </div>
           <span class="spacer"></span>
-          <button onclick={() => goto(`/print/${summary.id}`)}>Drucken</button>
+          <button onclick={() => goto(`/print?ids=${summary.id}`)}>Drucken</button>
           <button onclick={() => goto(`/editor/${summary.id}`)}>Bearbeiten</button>
           <button class="danger" onclick={() => deleteTemplate(summary)}>Loeschen</button>
         </div>

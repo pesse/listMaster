@@ -25,7 +25,9 @@ npm run tauri build    # erzeugt MSI/NSIS-Installer unter src-tauri/target/relea
 
 ## Status
 
-Erste Fassung: Vorlagen anlegen, bearbeiten, loeschen und drucken.
+Erste Fassung: Vorlagen anlegen, bearbeiten, loeschen und als schmale
+Streifen drucken -- mehrere nebeneinander auf einem A4-Bogen, zum
+Ausschneiden.
 
 Vorgesehen, aber noch nicht gebaut:
 

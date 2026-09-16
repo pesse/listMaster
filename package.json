@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify": "npm run check && npm run test",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "print:preview": "node scripts/print-preview.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

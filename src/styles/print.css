@@ -1,68 +1,102 @@
 /*
- * Druck-Layout. Der Kern der App: eine Checkliste ist ein Dokument,
- * und auf Papier entscheidet sich, ob sie brauchbar ist.
+ * Druck-Layout: schmale Streifen, die in Spalten ueber den A4-Bogen
+ * fliessen. Jeder Streifen ist nur so hoch wie sein Inhalt -- eine
+ * Zehn-Punkte-Liste soll keine halbe Seite verschwenden.
+ *
+ * Geschnitten wird entlang der Spaltenlinie (senkrecht) und der
+ * gestrichelten Unterkante jedes Streifens (waagrecht).
+ *
+ * Die Masse muessen mit `src/lib/print/layout.ts` uebereinstimmen.
  */
+
 .sheet {
   max-width: 21cm;
   margin: 0 auto;
-  padding: 2cm;
+  padding: 1cm;
   background: #fff;
   color: #000;
   font-family: "Segoe UI", system-ui, sans-serif;
 }
 
-.sheet h1 { font-size: 20pt; margin: 0 0 0.2cm; }
-.sheet .subtitle { color: #444; margin: 0 0 0.8cm; font-size: 10pt; }
-
-.sheet section { margin-bottom: 0.7cm; }
-.sheet h2 {
-  font-size: 11pt;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid #000;
-  padding-bottom: 0.1cm;
-  margin: 0 0 0.3cm;
+/* Spaltenzahl kommt als --columns aus der Komponente. */
+.strips {
+  columns: var(--columns, 3);
+  column-gap: 8mm;
+  column-rule: 1px dashed #999;
+  /* Volle Seitenhoehe, damit die Spaltenlinie als Schnittfuehrung bis zum
+     Blattrand durchlaeuft und nicht dort endet, wo der Inhalt aufhoert. */
+  min-height: calc(297mm - 2cm);
 }
 
-.sheet ul { list-style: none; margin: 0; padding: 0; }
-.sheet li {
+.strip {
+  /* Ein Streifen wird nie ueber Spalten oder Seiten zerrissen -- sonst
+     liesse er sich nicht mehr am Stueck ausschneiden. */
+  break-inside: avoid;
+  page-break-inside: avoid;
+  padding-bottom: 4mm;
+  margin-bottom: 4mm;
+  border-bottom: 1px dashed #999;
+}
+
+.strip h1 {
+  font-size: 12pt;
+  margin: 0 0 1.5mm;
+  line-height: 1.15;
+}
+.strip .subtitle {
+  margin: 0 0 2mm;
+  font-size: 7.5pt;
+  color: #444;
+}
+
+.strip section { margin-top: 2.5mm; }
+.strip h2 {
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 0.7pt solid #000;
+  padding-bottom: 0.4mm;
+  margin: 0 0 1.2mm;
+  break-after: avoid;
+}
+
+.strip ul { list-style: none; margin: 0; padding: 0; }
+.strip li {
   display: flex;
   align-items: flex-start;
-  gap: 0.35cm;
-  padding: 0.16cm 0;
-  font-size: 11pt;
-  border-bottom: 1px dotted #bbb;
+  gap: 2mm;
+  padding: 0.7mm 0;
+  font-size: 9pt;
+  line-height: 1.25;
+  break-inside: avoid;
 }
-.sheet .box {
+.strip .box {
   flex: none;
-  width: 0.45cm;
-  height: 0.45cm;
-  border: 1.2pt solid #000;
-  margin-top: 0.06cm;
+  width: 3.2mm;
+  height: 3.2mm;
+  border: 0.9pt solid #000;
+  margin-top: 0.5mm;
 }
-.sheet .note { display: block; font-size: 8.5pt; color: #555; margin-top: 0.05cm; }
+.strip .note {
+  display: block;
+  font-size: 7pt;
+  color: #555;
+}
 
-.sheet footer {
-  margin-top: 1cm;
-  padding-top: 0.2cm;
-  border-top: 1px solid #999;
-  font-size: 8pt;
-  color: #666;
-  display: flex;
-  justify-content: space-between;
-}
+/* Bildschirm: Streifenkanten andeuten, damit die Vorschau dem Papier gleicht. */
+.sheet { box-shadow: 0 1px 6px rgba(0, 0, 0, 0.15); }
 
 @media print {
-  @page { size: A4; margin: 1.5cm; }
+  @page { size: A4; margin: 1cm; }
 
-  /* Nur der Bogen wird gedruckt, die Bedienelemente nicht. */
   body { background: #fff; }
+  /* Bedienelemente gehoeren nicht aufs Papier. */
   .no-print { display: none !important; }
-  .sheet { max-width: none; margin: 0; padding: 0; }
 
-  /* Ein Punkt darf nie ueber den Seitenumbruch zerrissen werden, und
-     eine Abschnittsueberschrift nie allein am Seitenende stehen. */
-  .sheet li { break-inside: avoid; }
-  .sheet h2 { break-after: avoid; }
-  .sheet section { break-inside: auto; }
+  .sheet {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
 }
