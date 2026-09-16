@@ -62,21 +62,21 @@ wiederholte IDs sind ein gewollter Fall, kein Fehler.
 
 Den Umbruch macht CSS (`columns` auf `.strips`), nicht der Code. Jeder
 Streifen ist nur so hoch wie sein Inhalt und fliesst in die Spalten.
-Die drei Regeln in `print.css`, auf die es ankommt:
+Die zwei Regeln in `print.css`, auf die es ankommt:
 
 - `break-inside: avoid` auf `.strip` -- ein Streifen wird nie ueber
   Spalten oder Seiten zerrissen, sonst waere er nicht am Stueck
   ausschneidbar.
-- `column-rule` plus `min-height: calc(297mm - 2cm)` auf `.strips` -- die
-  senkrechte Schnittfuehrung laeuft bis zum Blattrand durch statt dort zu
-  enden, wo der Inhalt aufhoert.
-- `border-bottom` auf **jedem** `.strip`, ohne `:last-child`-Ausnahme --
-  auch der letzte Streifen braucht seine Schnittkante.
+- `border` auf `.strip` -- der Rahmen **ist** die Schnittlinie: einmal
+  aussen herum schneiden. Er hat eine fruehere Loesung aus Spaltenlinie
+  (`column-rule`) und gestrichelter Unterkante abgeloest, die schlechter
+  zu schneiden war und unruhiger aussah.
 
 `src/lib/print/layout.ts` haelt dieselben Masse in Millimetern, aber nur
 zur Warnung: `fitsInColumn()` meldet, wenn eine Liste zu lang fuer eine
-Spalte ist und der Umbruch sie zerreissen wuerde. Diese Zahlen steuern den
-Druck nicht -- wer `print.css` aendert, muss sie mitziehen.
+Spalte ist und der Umbruch sie zerreissen wuerde. Rahmen und Innenabstand
+stecken als `FRAME_MM` mit drin. Diese Zahlen steuern den Druck nicht --
+wer `print.css` aendert, muss sie mitziehen.
 
 **Druckbild pruefen, nicht erraten.** Das Layout laesst sich aus WSL heraus
 echt rendern, ohne die App zu starten:

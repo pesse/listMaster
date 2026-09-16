@@ -21,11 +21,7 @@
 /* Spaltenzahl kommt als --columns aus der Komponente. */
 .strips {
   columns: var(--columns, 3);
-  column-gap: 8mm;
-  column-rule: 1px dashed #999;
-  /* Volle Seitenhoehe, damit die Spaltenlinie als Schnittfuehrung bis zum
-     Blattrand durchlaeuft und nicht dort endet, wo der Inhalt aufhoert. */
-  min-height: calc(297mm - 2cm);
+  column-gap: 6mm;
 }
 
 .strip {
@@ -33,9 +29,10 @@
      liesse er sich nicht mehr am Stueck ausschneiden. */
   break-inside: avoid;
   page-break-inside: avoid;
-  padding-bottom: 4mm;
+  /* Der Rahmen ist die Schnittlinie: einmal aussen herum schneiden. */
+  border: 0.8pt solid #888;
+  padding: 3.5mm;
   margin-bottom: 4mm;
-  border-bottom: 1px dashed #999;
 }
 
 .strip h1 {

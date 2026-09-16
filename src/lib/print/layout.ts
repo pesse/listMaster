@@ -2,8 +2,8 @@ import type { ChecklistTemplate, TemplateId } from "../model/types";
 
 /**
  * Streifen-Druck: die Streifen fliessen in Spalten ueber den A4-Bogen,
- * jeder nur so hoch wie sein Inhalt. Geschnitten wird entlang der
- * Spaltenlinie und der gestrichelten Unterkante jedes Streifens.
+ * jeder nur so hoch wie sein Inhalt und in einem eigenen Rahmen.
+ * Geschnitten wird einmal aussen um den Rahmen herum.
  *
  * Den Umbruch macht der Browser (CSS `columns`), nicht dieser Code. Die
  * Masse hier dienen allein der Warnung, wenn eine Liste zu lang fuer eine
@@ -21,6 +21,8 @@ const SECTION_TITLE_MM = 6.5;
 const SECTION_GAP_MM = 2.5;
 const ITEM_MM = 5;
 const NOTE_MM = 3.5;
+/** Rahmen: Innenabstand oben und unten, Linienstaerke, Abstand zum naechsten. */
+const FRAME_MM = 11.5;
 
 /** Erlaubte Spaltenzahl pro Bogen. */
 export const COLUMN_COUNTS = [1, 2, 3] as const;
@@ -41,7 +43,7 @@ export function parseColumns(raw: string | null): ColumnCount {
  * nicht enthalten -- der Wert warnt nur, er steuert den Druck nicht.
  */
 export function estimateStripHeightMm(template: ChecklistTemplate): number {
-  let mm = TITLE_BLOCK_MM;
+  let mm = TITLE_BLOCK_MM + FRAME_MM;
   if (template.description?.trim()) mm += DESCRIPTION_MM;
 
   for (const section of template.sections) {

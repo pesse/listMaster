@@ -43,6 +43,12 @@ describe("estimateStripHeightMm", () => {
     expect(estimateStripHeightMm(big)).toBeGreaterThan(estimateStripHeightMm(small));
   });
 
+  it("rechnet den Rahmen mit -- auch eine leere Liste braucht Platz", () => {
+    const empty = createTemplate("leer");
+    empty.sections = [];
+    expect(estimateStripHeightMm(empty)).toBeGreaterThan(15);
+  });
+
   it("erkennt eine Liste, die keine Spalte mehr am Stueck fuellt", () => {
     const huge = createTemplate("lang");
     huge.sections = [{ id: "s", title: "", items: Array.from({ length: 80 }, () => item("x")) }];
