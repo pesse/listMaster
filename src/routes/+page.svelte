@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { getStore } from "$lib/storage";
+  import { duplicateTemplate, prepareForSave } from "$lib/model/template";
   import type { TemplateSummary } from "$lib/model/types";
 
   let summaries = $state<TemplateSummary[]>([]);
@@ -16,6 +17,25 @@
       error = e instanceof Error ? e.message : String(e);
     } finally {
       loading = false;
+    }
+  }
+
+  /**
+   * Kopie anlegen. `duplicateTemplate` vergibt alle IDs neu -- sonst
+   * trugen zwei Vorlagen dieselben ItemIds und ein spaeterer Lauf waere
+   * nicht mehr eindeutig zuzuordnen.
+   */
+  async function duplicate(summary: TemplateSummary) {
+    try {
+      const original = await getStore().load(summary.id);
+      if (!original) {
+        error = `Vorlage "${summary.name}" nicht gefunden.`;
+        return;
+      }
+      await getStore().save(prepareForSave(duplicateTemplate(original)));
+      await refresh();
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
     }
   }
 
@@ -67,6 +87,7 @@
           <span class="spacer"></span>
           <button onclick={() => goto(`/print?ids=${summary.id}`)}>Drucken</button>
           <button onclick={() => goto(`/editor/${summary.id}`)}>Bearbeiten</button>
+          <button onclick={() => duplicate(summary)}>Duplizieren</button>
           <button class="danger" onclick={() => deleteTemplate(summary)}>Loeschen</button>
         </div>
       </div>
