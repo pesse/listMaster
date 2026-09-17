@@ -56,9 +56,34 @@ Jeder Streifen traegt eine eigene Vorlage -- verschiedene Listen oder
 dieselbe mehrfach. Der Grund: die realen Listen sind kurz (die erste hatte
 10 Punkte), eine A4-Seite pro Liste waere fast leer.
 
-Die Route ist `/print?ids=a,b,a&cols=3`. Der Bogen steht vollstaendig in
-der URL, damit er nachladbar und als Lesezeichen wiederverwendbar ist;
-wiederholte IDs sind ein gewollter Fall, kein Fehler.
+Die Route ist `/print?ids=a.heute*s2,b,a&cols=3`. Der Bogen steht
+vollstaendig in der URL, damit er nachladbar und als Lesezeichen
+wiederverwendbar ist; wiederholte IDs sind ein gewollter Fall, kein Fehler.
+`src/lib/print/sheet.ts` liest und schreibt diese Folge:
+`<Vorlage>.<Datum>*<Abschnitt>*…`, je Streifen.
+
+**Datum und Ausblendung haengen am Streifen, nicht an der Vorlage und nicht
+am Bogen.** Derselbe Einkaufszettel kann einmal fuer heute vollstaendig und
+einmal fuer morgen ohne den Getraenke-Abschnitt auf demselben Bogen liegen.
+Ein neu hinzugefuegter Streifen erbt das Datum des letzten -- ein Bogen ist
+meist fuer einen Tag.
+
+Hinter dem `*` stehen die **Abschnitte, die dieser Streifen nicht druckt** --
+als stabile `SectionId`, nicht als Position, damit ein Lesezeichen das
+Umsortieren der Vorlage ueberlebt. `visibleTemplate()` liefert die gedruckte
+Fassung -- Rendern *und* Hoehenschaetzung arbeiten darauf, sonst warnte
+`fitsInColumn` vor Zeilen, die gar nicht aufs Papier kommen.
+
+Hinter dem `.` steht das **Datum** (`src/lib/print/date.ts`), rechts in der
+Titelzeile, gedruckt als `17.09.26`. `heute` und `morgen` sind bewusst
+**keine festen Tage**, sondern werden erst beim Rendern aufgeloest: ein
+abgelegter Bogen druckt morgen das Datum von morgen. Ein fester Tag steht
+als ISO-Tag (`a.2026-09-17`). Gerechnet wird durchgehend in Ortszeit --
+`toISOString()` waere falsch, es macht aus dem 17. abends den 16.
+
+`.` und `*` als Trenner, weil `URLSearchParams` sie unkodiert stehen laesst
+(ein `!` stuende als `%21` in der Adresszeile) und weder UUIDs noch die
+Datumswerte sie enthalten.
 
 Den Umbruch macht CSS (`columns` auf `.strips`), nicht der Code. Jeder
 Streifen ist nur so hoch wie sein Inhalt und fliesst in die Spalten.
@@ -82,7 +107,7 @@ wer `print.css` aendert, muss sie mitziehen.
 echt rendern, ohne die App zu starten:
 
 ```bash
-npm run print:preview -- 3 5 /tmp/sheet.pdf   # Spalten, Streifen, Ziel
+npm run print:preview -- 3 5 /tmp/sheet.pdf heute   # Spalten, Streifen, Ziel, Datum
 ```
 
 `scripts/print-preview.mjs` zieht die echten Vorlagen aus dem

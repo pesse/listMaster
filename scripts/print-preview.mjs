@@ -1,7 +1,10 @@
 /**
  * Rendert das Streifen-Druckbild als PDF, ohne die App zu starten.
  *
- *   node scripts/print-preview.mjs [Spalten] [Streifen] [Ziel.pdf]
+ *   node scripts/print-preview.mjs [Spalten] [Streifen] [Ziel.pdf] [Datum]
+ *
+ * Datum ist `heute`, `morgen`, ein ISO-Tag (`2026-09-17`) oder leer und gilt
+ * hier fuer alle Streifen -- in der App haengt es an jedem Streifen einzeln.
  *
  * Quelle sind die echten Vorlagen aus dem AppData-Verzeichnis, damit das
  * Bild zeigt, was der Drucker wirklich ausgibt -- inklusive Spaltenlinie
@@ -29,7 +32,27 @@ function appData() {
 const TEMPLATE_DIR =
   process.env.LISTMASTER_TEMPLATES ?? join(appData(), "de.listmaster.desktop", "templates");
 
-const [columns = "3", count = "5", out = "print-preview.pdf"] = process.argv.slice(2);
+const [columns = "3", count = "5", out = "print-preview.pdf", datum = ""] = process.argv.slice(2);
+
+/**
+ * Kleiner Nachbau von `src/lib/print/date.ts` -- das Skript laeuft ohne
+ * Bundler und kann das TypeScript-Modul nicht importieren.
+ */
+function printDate(choice) {
+  const day = new Date();
+  if (choice === "heute" || choice === "morgen") {
+    if (choice === "morgen") day.setDate(day.getDate() + 1);
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(choice)) {
+    const [y, m, d] = choice.split("-").map(Number);
+    day.setFullYear(y, m - 1, d);
+  } else {
+    return null;
+  }
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(day.getDate())}.${pad(day.getMonth() + 1)}.${String(day.getFullYear()).slice(2)}`;
+}
+
+const dateLabel = printDate(datum.trim().toLowerCase());
 
 const templates = readdirSync(TEMPLATE_DIR)
   .filter((f) => f.endsWith(".json"))
@@ -44,7 +67,10 @@ const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">":
 
 const strip = (t) => `
   <article class="strip">
-    <h1>${esc(t.name)}</h1>
+    <header class="head">
+      <h1>${esc(t.name)}</h1>
+      ${dateLabel ? `<span class="date">${dateLabel}</span>` : ""}
+    </header>
     ${t.description ? `<p class="subtitle">${esc(t.description)}</p>` : ""}
     ${t.sections
       .map(
@@ -81,4 +107,6 @@ execFileSync(
   { stdio: ["ignore", "ignore", "ignore"] },
 );
 
-console.log(`${strips.length} Streifen, ${columns} Spalten -> ${out}`);
+console.log(
+  `${strips.length} Streifen, ${columns} Spalten${dateLabel ? `, Datum ${dateLabel}` : ""} -> ${out}`,
+);

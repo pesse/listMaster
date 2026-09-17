@@ -76,3 +76,16 @@ select {
   color: inherit;
 }
 select:focus { outline: none; border-color: var(--accent); }
+
+/* Druckbogen: ein Streifen mit Datum und ausblendbaren Abschnitten. */
+.strip-row { padding: 0.15rem 0 0.35rem; }
+.chip-group { display: flex; gap: 0.2rem; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.3rem; padding: 0.25rem 0 0 1.3rem; }
+.chip {
+  padding: 0.1rem 0.45rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  color: var(--muted);
+}
+.chip.off { text-decoration: line-through; opacity: 0.6; }
+.chip.on { border-color: var(--accent); background: #eaf1fc; color: var(--accent); }

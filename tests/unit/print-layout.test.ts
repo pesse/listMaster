@@ -4,8 +4,6 @@ import {
   estimateStripHeightMm,
   fitsInColumn,
   parseColumns,
-  parseStripIds,
-  serializeStripIds,
 } from "../../src/lib/print/layout";
 import { createTemplate } from "../../src/lib/model/template";
 import type { ChecklistTemplate } from "../../src/lib/model/types";
@@ -53,23 +51,6 @@ describe("estimateStripHeightMm", () => {
     const huge = createTemplate("lang");
     huge.sections = [{ id: "s", title: "", items: Array.from({ length: 80 }, () => item("x")) }];
     expect(fitsInColumn(huge)).toBe(false);
-  });
-});
-
-describe("parseStripIds", () => {
-  it("erhaelt Wiederholungen -- derselbe Streifen mehrfach ist gewollt", () => {
-    expect(parseStripIds("a,b,a")).toEqual(["a", "b", "a"]);
-  });
-
-  it("verkraftet leere und verrutschte Eingaben", () => {
-    expect(parseStripIds(null)).toEqual([]);
-    expect(parseStripIds("")).toEqual([]);
-    expect(parseStripIds(" a , ,b ")).toEqual(["a", "b"]);
-  });
-
-  it("ist zu serializeStripIds rund", () => {
-    const ids = ["a", "b", "a"];
-    expect(parseStripIds(serializeStripIds(ids))).toEqual(ids);
   });
 });
 

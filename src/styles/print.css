@@ -35,10 +35,23 @@
   margin-bottom: 4mm;
 }
 
-.strip h1 {
-  font-size: 12pt;
+/* Titelzeile: Name links, Datum rechtsbuendig auf derselben Hoehe. */
+.strip .head {
+  display: flex;
+  align-items: baseline;
+  gap: 2mm;
   margin: 0 0 1.5mm;
+}
+.strip h1 {
+  flex: 1;
+  font-size: 12pt;
+  margin: 0;
   line-height: 1.15;
+}
+.strip .date {
+  flex: none;
+  font-size: 9pt;
+  font-variant-numeric: tabular-nums;
 }
 .strip .subtitle {
   margin: 0 0 2mm;

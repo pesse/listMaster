@@ -1,4 +1,4 @@
-import type { ChecklistTemplate, TemplateId } from "../model/types";
+import type { ChecklistTemplate } from "../model/types";
 
 /**
  * Streifen-Druck: die Streifen fliessen in Spalten ueber den A4-Bogen,
@@ -41,6 +41,10 @@ export function parseColumns(raw: string | null): ColumnCount {
 /**
  * Grobe Hoehenschaetzung eines Streifens. Umbrueche langer Punkttexte sind
  * nicht enthalten -- der Wert warnt nur, er steuert den Druck nicht.
+ *
+ * Erwartet die gedruckte Fassung (`visibleTemplate`): ausgeblendete
+ * Abschnitte duerfen nicht mitzaehlen. Das Datum sitzt in der Titelzeile
+ * und kostet keine zusaetzliche Hoehe.
  */
 export function estimateStripHeightMm(template: ChecklistTemplate): number {
   let mm = TITLE_BLOCK_MM + FRAME_MM;
@@ -64,21 +68,4 @@ export function estimateStripHeightMm(template: ChecklistTemplate): number {
  */
 export function fitsInColumn(template: ChecklistTemplate): boolean {
   return estimateStripHeightMm(template) <= COLUMN_HEIGHT_MM;
-}
-
-/**
- * Die Streifenfolge steht in der URL (`?ids=a,b,a`), damit ein Bogen
- * nachladbar und als Lesezeichen wiederverwendbar ist. IDs duerfen sich
- * wiederholen -- derselbe Streifen mehrfach ist ein gewollter Fall.
- */
-export function parseStripIds(raw: string | null): TemplateId[] {
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((id) => id.trim())
-    .filter((id) => id !== "");
-}
-
-export function serializeStripIds(ids: TemplateId[]): string {
-  return ids.join(",");
 }
