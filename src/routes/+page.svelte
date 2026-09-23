@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { getStore } from "$lib/storage";
+  import { printHref } from "$lib/print/sheet";
   import { duplicateTemplate, prepareForSave } from "$lib/model/template";
   import type { TemplateSummary } from "$lib/model/types";
 
@@ -85,7 +86,7 @@
             </div>
           </div>
           <span class="spacer"></span>
-          <button onclick={() => goto(`/print?ids=${summary.id}`)}>Drucken</button>
+          <button onclick={() => goto(printHref(summary.id))}>Drucken</button>
           <button onclick={() => goto(`/editor/${summary.id}`)}>Bearbeiten</button>
           <button onclick={() => duplicate(summary)}>Duplizieren</button>
           <button class="danger" onclick={() => deleteTemplate(summary)}>Loeschen</button>

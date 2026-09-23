@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { printHref } from "$lib/print/sheet";
   import { getStore } from "$lib/storage";
   import {
     createItem,
@@ -60,7 +61,7 @@
 
   async function saveAndPrint() {
     const saved = await save();
-    if (saved) goto(`/print?ids=${saved.id}`);
+    if (saved) goto(printHref(saved.id));
   }
 
   function addSection() {

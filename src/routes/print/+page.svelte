@@ -10,17 +10,24 @@
   } from "$lib/print/layout";
   import {
     createStrip,
+    hiddenItems,
     isHidden,
     parseStrips,
     serializeStrips,
     setDate,
-    toggleSection,
+    toggleHidden,
     visibleTemplate,
     type StripSpec,
   } from "$lib/print/sheet";
   import { NO_DATE, printedDate, toIsoDay, type DateChoice } from "$lib/print/date";
   import { moveInArray } from "$lib/model/template";
-  import type { ChecklistTemplate, SectionId, TemplateId, TemplateSummary } from "$lib/model/types";
+  import type {
+    ChecklistTemplate,
+    ItemId,
+    SectionId,
+    TemplateId,
+    TemplateSummary,
+  } from "$lib/model/types";
   import "../../styles/print.css";
 
   /**
@@ -47,18 +54,17 @@
 
   /**
    * Die Streifen, wie sie wirklich aufs Papier kommen: ohne ausgeblendete
-   * Abschnitte und mit aufgeloestem Datum ("heute"/"morgen" werden erst
-   * hier zu einem Tag -- siehe print/date.ts).
+   * Abschnitte und Punkte und mit aufgeloestem Datum ("heute"/"morgen"
+   * werden erst hier zu einem Tag -- siehe print/date.ts). `index` zeigt
+   * zurueck auf den Streifen, damit die Vorschau ihn aendern kann.
    */
   const printable = $derived(
-    strips
-      .map((strip) => {
-        const template = cache[strip.templateId];
-        return template
-          ? { template: visibleTemplate(template, strip), date: printedDate(strip.date) }
-          : null;
-      })
-      .filter((entry): entry is { template: ChecklistTemplate; date: string | null } => entry !== null),
+    strips.flatMap((strip, index) => {
+      const template = cache[strip.templateId];
+      return template
+        ? [{ index, template: visibleTemplate(template, strip), date: printedDate(strip.date) }]
+        : [];
+    }),
   );
   const tooLong = $derived([
     ...new Set(printable.filter((e) => !fitsInColumn(e.template)).map((e) => e.template.name)),
@@ -95,10 +101,14 @@
     goto(`/print?${params}`, { replaceState: true, keepFocus: true, noScroll: true });
   }
 
-  /** Ein neuer Streifen erbt das Datum des letzten -- ein Bogen ist meist fuer einen Tag. */
+  /**
+   * Ein neuer Streifen erbt das Datum des letzten -- ein Bogen ist meist fuer
+   * einen Tag. Der erste traegt "heute".
+   */
   function addStrip() {
     if (!pickerId) return;
-    apply([...strips, createStrip(pickerId, strips.at(-1)?.date ?? NO_DATE)]);
+    const last = strips.at(-1);
+    apply([...strips, last ? createStrip(pickerId, last.date) : createStrip(pickerId)]);
   }
 
   function duplicateStrip(index: number) {
@@ -119,9 +129,12 @@
     apply(strips.map((strip, i) => (i === index ? change(strip) : strip)));
   }
 
-  /** Ein Abschnitt verschwindet nur von diesem einen Streifen. */
-  function toggleStripSection(index: number, sectionId: SectionId) {
-    updateStrip(index, (strip) => toggleSection(strip, sectionId));
+  /**
+   * Ein Abschnitt oder Punkt verschwindet nur von diesem einen Streifen --
+   * die Vorlage bleibt unberuehrt.
+   */
+  function toggleOnStrip(index: number, id: SectionId | ItemId) {
+    updateStrip(index, (strip) => toggleHidden(strip, id));
   }
 
   function chooseDateKind(index: number, kind: string) {
@@ -233,13 +246,31 @@
                   class="chip"
                   class:off={isHidden(strip, section.id)}
                   title={isHidden(strip, section.id) ? "wieder drucken" : "auf diesem Streifen ausblenden"}
-                  onclick={() => toggleStripSection(index, section.id)}
+                  onclick={() => toggleOnStrip(index, section.id)}
                 >
                   {isHidden(strip, section.id) ? "☐" : "☑"}
                   {section.title.trim() || "ohne Titel"}
                 </button>
               {/each}
             </div>
+          {/if}
+
+          {#if template}
+            {@const removed = hiddenItems(template, strip)}
+            {#if removed.length > 0}
+              <div class="chips">
+                <span class="muted" style="font-size:0.85rem">entfernt:</span>
+                {#each removed as item (item.id)}
+                  <button
+                    class="chip off"
+                    title="wieder drucken"
+                    onclick={() => toggleOnStrip(index, item.id)}
+                  >
+                    ↺ {item.text.trim() || "ohne Text"}
+                  </button>
+                {/each}
+              </div>
+            {/if}
           {/if}
         </div>
       {/each}
@@ -249,7 +280,7 @@
 
 <div class="sheet">
   <div class="strips" style="--columns: {columns}">
-    {#each printable as { template, date }, index (`${template.id}-${index}`)}
+    {#each printable as { index, template, date } (`${template.id}-${index}`)}
       <article class="strip">
         <header class="head">
           <h1>{template.name}</h1>
@@ -272,6 +303,11 @@
                     {item.text}
                     {#if item.note}<span class="note">{item.note}</span>{/if}
                   </span>
+                  <button
+                    class="drop no-print"
+                    title="nur von diesem Streifen entfernen"
+                    onclick={() => toggleOnStrip(index, item.id)}>✕</button
+                  >
                 </li>
               {/each}
             </ul>

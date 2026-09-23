@@ -60,18 +60,23 @@ Die Route ist `/print?ids=a.heute*s2,b,a&cols=3`. Der Bogen steht
 vollstaendig in der URL, damit er nachladbar und als Lesezeichen
 wiederverwendbar ist; wiederholte IDs sind ein gewollter Fall, kein Fehler.
 `src/lib/print/sheet.ts` liest und schreibt diese Folge:
-`<Vorlage>.<Datum>*<Abschnitt>*…`, je Streifen.
+`<Vorlage>.<Datum>*<Abschnitt|Punkt>*…`, je Streifen.
 
 **Datum und Ausblendung haengen am Streifen, nicht an der Vorlage und nicht
 am Bogen.** Derselbe Einkaufszettel kann einmal fuer heute vollstaendig und
 einmal fuer morgen ohne den Getraenke-Abschnitt auf demselben Bogen liegen.
 Ein neu hinzugefuegter Streifen erbt das Datum des letzten -- ein Bogen ist
-meist fuer einen Tag.
+meist fuer einen Tag; der erste Streifen -- auch der von "Drucken" in
+Uebersicht und Editor (`printHref`) -- traegt `heute`. Ein Streifen ohne
+Datumsteil in der URL bleibt "ohne Datum", damit diese Wahl darstellbar ist.
 
-Hinter dem `*` stehen die **Abschnitte, die dieser Streifen nicht druckt** --
-als stabile `SectionId`, nicht als Position, damit ein Lesezeichen das
-Umsortieren der Vorlage ueberlebt. `visibleTemplate()` liefert die gedruckte
-Fassung -- Rendern *und* Hoehenschaetzung arbeiten darauf, sonst warnte
+Hinter dem `*` steht, **was dieser Streifen nicht druckt** -- ganze
+Abschnitte und einzelne Punkte (in der Vorschau per ✕ entfernt) in einer
+Liste, als stabile `SectionId`/`ItemId`, nicht als Position, damit ein
+Lesezeichen das Umsortieren der Vorlage ueberlebt. Die Vorlage selbst bleibt
+unberuehrt. Beide ID-Sorten teilen sich die Liste, weil sie UUIDs sind. Ein
+Abschnitt, dessen Punkte alle entfernt sind, faellt mit weg.
+`visibleTemplate()` liefert die gedruckte Fassung -- Rendern *und* Hoehenschaetzung arbeiten darauf, sonst warnte
 `fitsInColumn` vor Zeilen, die gar nicht aufs Papier kommen.
 
 Hinter dem `.` steht das **Datum** (`src/lib/print/date.ts`), rechts in der
