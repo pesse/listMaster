@@ -18,8 +18,8 @@ vorgesehen.
 - **Je Streifen einstellbar**, ohne die Vorlage zu aendern:
   - Datum im Kopf -- `heute` (Standard), `morgen`, ein fester Tag oder keins.
     `heute`/`morgen` werden erst beim Drucken aufgeloest.
-  - ganze Abschnitte ausblenden
-  - einzelne Punkte in der Vorschau entfernen (✕ beim Ueberfahren)
+  - ganze Abschnitte und einzelne Punkte direkt in der Vorschau entfernen
+    (✕ beim Ueberfahren von Titel bzw. Punkt)
 - **Warnung**, wenn eine Liste zu lang fuer eine Spalte ist.
 - **Bogen als Lesezeichen**: Die komplette Zusammenstellung steht in der
   URL und laesst sich jederzeit wieder aufrufen, z. B.

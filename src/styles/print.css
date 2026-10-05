@@ -111,7 +111,16 @@
   opacity: 0;
 }
 .strip li:hover .drop,
+.strip h2:hover .drop,
 .strip .drop:focus-visible { opacity: 1; }
+/* Im Abschnittstitel absolut, damit die Ueberschrift so hoch bleibt wie auf
+   dem Papier -- layout.ts rechnet mit dieser Hoehe. */
+.strip h2 { position: relative; }
+.strip h2 .drop {
+  position: absolute;
+  right: 0;
+  bottom: 0.4mm;
+}
 
 @media print {
   @page { size: A4; margin: 1cm; }

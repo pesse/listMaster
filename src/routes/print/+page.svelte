@@ -293,7 +293,14 @@
         {#each template.sections as section (section.id)}
           <section>
             {#if section.title.trim()}
-              <h2>{section.title}</h2>
+              <h2>
+                {section.title}
+                <button
+                  class="drop no-print"
+                  title="Abschnitt nur von diesem Streifen entfernen"
+                  onclick={() => toggleOnStrip(index, section.id)}>✕</button
+                >
+              </h2>
             {/if}
             <ul>
               {#each section.items as item (item.id)}
