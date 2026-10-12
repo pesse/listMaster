@@ -3,8 +3,10 @@
  * fliessen. Jeder Streifen ist nur so hoch wie sein Inhalt -- eine
  * Zehn-Punkte-Liste soll keine halbe Seite verschwenden.
  *
- * Geschnitten wird entlang der Spaltenlinie (senkrecht) und der
- * gestrichelten Unterkante jedes Streifens (waagrecht).
+ * Die Streifen liegen ohne Abstand dicht an dicht -- so passen die
+ * meisten auf den Bogen. Nachbarn teilen sich eine Rahmenlinie, ein
+ * Schnitt entlang der Linie trennt beide. Der Seitenrand ist nur so breit,
+ * wie die meisten Drucker ohnehin nicht bedrucken koennen.
  *
  * Die Masse muessen mit `src/lib/print/layout.ts` uebereinstimmen.
  */
@@ -21,7 +23,7 @@
 /* Spaltenzahl kommt als --columns aus der Komponente. */
 .strips {
   columns: var(--columns, 3);
-  column-gap: 6mm;
+  column-gap: 0;
 }
 
 .strip {
@@ -31,8 +33,9 @@
   page-break-inside: avoid;
   /* Der Rahmen ist die Schnittlinie: einmal aussen herum schneiden. */
   border: 0.8pt solid #888;
-  padding: 3.5mm;
-  margin-bottom: 4mm;
+  padding: 2.5mm 3mm;
+  /* Kein Abstand: Nachbarn teilen sich eine Linie, ein Schnitt trennt beide. */
+  margin: 0 -0.8pt -0.8pt 0;
 }
 
 /* Titelzeile: Name links, Datum rechtsbuendig auf derselben Hoehe. */
@@ -40,7 +43,7 @@
   display: flex;
   align-items: baseline;
   gap: 2mm;
-  margin: 0 0 1.5mm;
+  margin: 0 0 1mm;
 }
 .strip h1 {
   flex: 1;
@@ -54,19 +57,19 @@
   font-variant-numeric: tabular-nums;
 }
 .strip .subtitle {
-  margin: 0 0 2mm;
+  margin: 0 0 1mm;
   font-size: 7.5pt;
   color: #444;
 }
 
-.strip section { margin-top: 2.5mm; }
+.strip section { margin-top: 1.5mm; }
 .strip h2 {
   font-size: 8pt;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 0.7pt solid #000;
-  padding-bottom: 0.4mm;
-  margin: 0 0 1.2mm;
+  padding-bottom: 0.3mm;
+  margin: 0 0 0.6mm;
   break-after: avoid;
 }
 
@@ -75,7 +78,7 @@
   display: flex;
   align-items: flex-start;
   gap: 2mm;
-  padding: 0.7mm 0;
+  padding: 0.35mm 0;
   font-size: 9pt;
   line-height: 1.25;
   break-inside: avoid;
@@ -123,7 +126,7 @@
 }
 
 @media print {
-  @page { size: A4; margin: 1cm; }
+  @page { size: A4; margin: 5mm; }
 
   body { background: #fff; }
   /* Bedienelemente gehoeren nicht aufs Papier. */

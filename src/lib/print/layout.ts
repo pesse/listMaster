@@ -2,8 +2,9 @@ import type { ChecklistTemplate } from "../model/types";
 
 /**
  * Streifen-Druck: die Streifen fliessen in Spalten ueber den A4-Bogen,
- * jeder nur so hoch wie sein Inhalt und in einem eigenen Rahmen.
- * Geschnitten wird einmal aussen um den Rahmen herum.
+ * jeder nur so hoch wie sein Inhalt und in einem eigenen Rahmen. Die
+ * Streifen liegen ohne Abstand aneinander und teilen sich die Rahmenlinie:
+ * ein Schnitt trennt zwei Nachbarn.
  *
  * Den Umbruch macht der Browser (CSS `columns`), nicht dieser Code. Die
  * Masse hier dienen allein der Warnung, wenn eine Liste zu lang fuer eine
@@ -11,18 +12,19 @@ import type { ChecklistTemplate } from "../model/types";
  */
 
 const PAGE_HEIGHT_MM = 297;
-const PAGE_MARGIN_MM = 10;
+const PAGE_MARGIN_MM = 5;
 /** Nutzbare Hoehe einer Spalte auf A4. */
 export const COLUMN_HEIGHT_MM = PAGE_HEIGHT_MM - 2 * PAGE_MARGIN_MM;
 
-const TITLE_BLOCK_MM = 10;
-const DESCRIPTION_MM = 4.5;
-const SECTION_TITLE_MM = 6.5;
-const SECTION_GAP_MM = 2.5;
-const ITEM_MM = 5;
+const TITLE_BLOCK_MM = 6.5;
+const DESCRIPTION_MM = 4;
+const SECTION_TITLE_MM = 5;
+const SECTION_GAP_MM = 1.5;
+const ITEM_MM = 4.9;
 const NOTE_MM = 3.5;
-/** Rahmen: Innenabstand oben und unten, Linienstaerke, Abstand zum naechsten. */
-const FRAME_MM = 11.5;
+/** Rahmen: Innenabstand oben und unten, Linienstaerke. Kein Abstand zum
+ *  naechsten Streifen -- Nachbarn teilen sich die Schnittlinie. */
+const FRAME_MM = 6;
 
 /** Erlaubte Spaltenzahl pro Bogen. */
 export const COLUMN_COUNTS = [1, 2, 3] as const;

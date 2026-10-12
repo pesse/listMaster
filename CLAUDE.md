@@ -101,6 +101,10 @@ Die zwei Regeln in `print.css`, auf die es ankommt:
   aussen herum schneiden. Er hat eine fruehere Loesung aus Spaltenlinie
   (`column-rule`) und gestrichelter Unterkante abgeloest, die schlechter
   zu schneiden war und unruhiger aussah.
+- **Kein Abstand** zwischen den Streifen (`column-gap: 0`, negativer
+  Aussenrand in Linienstaerke): Nachbarn teilen sich eine Rahmenlinie, ein
+  Schnitt trennt beide. So passen die meisten Streifen auf den Bogen;
+  dazu der schmale Seitenrand (`@page` 5 mm) und die knappen Zeilenabstaende.
 
 `src/lib/print/layout.ts` haelt dieselben Masse in Millimetern, aber nur
 zur Warnung: `fitsInColumn()` meldet, wenn eine Liste zu lang fuer eine

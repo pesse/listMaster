@@ -44,7 +44,7 @@ describe("estimateStripHeightMm", () => {
   it("rechnet den Rahmen mit -- auch eine leere Liste braucht Platz", () => {
     const empty = createTemplate("leer");
     empty.sections = [];
-    expect(estimateStripHeightMm(empty)).toBeGreaterThan(15);
+    expect(estimateStripHeightMm(empty)).toBeGreaterThan(10);
   });
 
   it("erkennt eine Liste, die keine Spalte mehr am Stueck fuellt", () => {
