@@ -1,18 +1,20 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { getStore } from "$lib/storage";
+  import { getSheetStore, getStore } from "$lib/storage";
   import { printHref } from "$lib/print/sheet";
+  import { savedSheetHref, type SheetSummary } from "$lib/print/saved-sheet";
   import { duplicateTemplate, prepareForSave } from "$lib/model/template";
   import type { TemplateSummary } from "$lib/model/types";
 
   let summaries = $state<TemplateSummary[]>([]);
+  let sheets = $state<SheetSummary[]>([]);
   let error = $state<string | null>(null);
   let loading = $state(true);
 
   async function refresh() {
     loading = true;
     try {
-      summaries = await getStore().list();
+      [summaries, sheets] = await Promise.all([getStore().list(), getSheetStore().list()]);
       error = null;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
@@ -44,6 +46,30 @@
     if (!confirm(`Vorlage "${summary.name}" wirklich loeschen?`)) return;
     try {
       await getStore().remove(summary.id);
+      await refresh();
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  async function openSheet(summary: SheetSummary) {
+    try {
+      const sheet = await getSheetStore().load(summary.id);
+      if (!sheet) {
+        error = `Bogen "${summary.name}" nicht gefunden.`;
+        return;
+      }
+      await goto(savedSheetHref(sheet));
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  /** Nur der gespeicherte Bogen geht -- die Vorlagen darin bleiben. */
+  async function deleteSheet(summary: SheetSummary) {
+    if (!confirm(`Bogen "${summary.name}" wirklich loeschen?`)) return;
+    try {
+      await getSheetStore().remove(summary.id);
       await refresh();
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
@@ -93,5 +119,35 @@
         </div>
       </div>
     {/each}
+  {/if}
+
+  {#if !loading}
+    <div class="toolbar" style="margin-top:1.5rem">
+      <h2 style="margin:0; font-size:1.15rem">Gespeicherte Boegen</h2>
+      <span class="spacer"></span>
+      <button onclick={() => goto("/print")}>Neuer Bogen</button>
+    </div>
+    {#if sheets.length === 0}
+      <p class="muted">
+        Noch kein Bogen gespeichert. In der Druckvorschau einen Namen vergeben und „Bogen speichern“ —
+        etwa fuer einen Wochenplan, der jede Woche wieder gedruckt wird.
+      </p>
+    {:else}
+      {#each sheets as sheet (sheet.id)}
+        <div class="card">
+          <div class="toolbar" style="margin:0">
+            <div>
+              <strong>{sheet.name}</strong>
+              <div class="muted" style="font-size:0.85rem">
+                {sheet.stripCount} Streifen
+              </div>
+            </div>
+            <span class="spacer"></span>
+            <button onclick={() => openSheet(sheet)}>Oeffnen</button>
+            <button class="danger" onclick={() => deleteSheet(sheet)}>Loeschen</button>
+          </div>
+        </div>
+      {/each}
+    {/if}
   {/if}
 </div>

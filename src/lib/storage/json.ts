@@ -1,4 +1,6 @@
+import type { z } from "zod";
 import { checklistTemplateSchema, SCHEMA_VERSION, type ChecklistTemplate } from "../model/types";
+import { savedSheetSchema, toStoredSheet, type SavedSheet } from "../print/saved-sheet";
 import { StorageError } from "./types";
 
 /**
@@ -23,22 +25,41 @@ function migrate(raw: unknown): unknown {
   return data;
 }
 
-export function deserialize(text: string, source = "<unbekannt>"): ChecklistTemplate {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch (cause) {
-    throw new StorageError(`${source}: enthaelt kein gueltiges JSON`, cause);
-  }
-
-  const result = checklistTemplateSchema.safeParse(migrate(raw));
+function parse<S extends z.ZodTypeAny>(
+  schema: S,
+  raw: unknown,
+  source: string,
+  problem: string,
+): z.output<S> {
+  const result = schema.safeParse(raw);
   if (!result.success) {
     const details = result.error.issues
       .map((issue) => `${issue.path.join(".") || "<root>"}: ${issue.message}`)
       .join("; ");
-    throw new StorageError(`${source}: keine gueltige Checklisten-Vorlage (${details})`);
+    throw new StorageError(`${source}: ${problem} (${details})`);
   }
   return result.data;
+}
+
+function parseJson(text: string, source: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch (cause) {
+    throw new StorageError(`${source}: enthaelt kein gueltiges JSON`, cause);
+  }
+}
+
+export function deserialize(text: string, source = "<unbekannt>"): ChecklistTemplate {
+  const raw = migrate(parseJson(text, source));
+  return parse(checklistTemplateSchema, raw, source, "keine gueltige Checklisten-Vorlage");
+}
+
+export function serializeSheet(sheet: SavedSheet): string {
+  return JSON.stringify(toStoredSheet(sheet), null, 2) + "\n";
+}
+
+export function deserializeSheet(text: string, source = "<unbekannt>"): SavedSheet {
+  return parse(savedSheetSchema, parseJson(text, source), source, "kein gueltiger Druckbogen");
 }
 
 /**
@@ -46,8 +67,8 @@ export function deserialize(text: string, source = "<unbekannt>"): ChecklistTemp
  * in einem Git-Repo oder Sync-Ordner. Die ID bleibt als Suffix erhalten,
  * damit Umbenennen nicht zu Kollisionen fuehrt.
  */
-export function fileNameFor(template: ChecklistTemplate): string {
-  const slug = template.name
+export function fileNameFor(doc: { id: string; name: string }): string {
+  const slug = doc.name
     .toLowerCase()
     .replace(/[äÄ]/g, "ae")
     .replace(/[öÖ]/g, "oe")
@@ -56,5 +77,5 @@ export function fileNameFor(template: ChecklistTemplate): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
-  return `${slug || "checkliste"}.${template.id}.json`;
+  return `${slug || "checkliste"}.${doc.id}.json`;
 }

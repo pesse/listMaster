@@ -3,7 +3,7 @@
  *
  *   node scripts/print-preview.mjs [Spalten] [Streifen] [Ziel.pdf] [Datum]
  *
- * Datum ist `heute`, `morgen`, ein ISO-Tag (`2026-09-17`) oder leer und gilt
+ * Datum ist `heute`, `morgen`, `in3`, ein ISO-Tag (`2026-09-17`) oder leer und gilt
  * hier fuer alle Streifen -- in der App haengt es an jedem Streifen einzeln.
  *
  * Quelle sind die echten Vorlagen aus dem AppData-Verzeichnis, damit das
@@ -40,8 +40,11 @@ const [columns = "3", count = "5", out = "print-preview.pdf", datum = ""] = proc
  */
 function printDate(choice) {
   const day = new Date();
+  const later = /^in(\d{1,3})$/.exec(choice);
   if (choice === "heute" || choice === "morgen") {
     if (choice === "morgen") day.setDate(day.getDate() + 1);
+  } else if (later) {
+    day.setDate(day.getDate() + Number(later[1]));
   } else if (/^\d{4}-\d{2}-\d{2}$/.test(choice)) {
     const [y, m, d] = choice.split("-").map(Number);
     day.setFullYear(y, m - 1, d);
@@ -49,7 +52,8 @@ function printDate(choice) {
     return null;
   }
   const pad = (n) => String(n).padStart(2, "0");
-  return `${pad(day.getDate())}.${pad(day.getMonth() + 1)}.${String(day.getFullYear()).slice(2)}`;
+  const weekday = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"][day.getDay()];
+  return `${weekday} ${pad(day.getDate())}.${pad(day.getMonth() + 1)}.${String(day.getFullYear()).slice(2)}`;
 }
 
 const dateLabel = printDate(datum.trim().toLowerCase());

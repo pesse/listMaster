@@ -9,8 +9,8 @@ zweites Build-Target vorgesehen, nicht als eigene Codebasis.
 - **SvelteKit im SPA-Modus** (`adapter-static`, `fallback: index.html`,
   `ssr = false`) + TypeScript + Vite
 - **Tauri 2** als Desktop-Huelle, WebView2 unter Windows
-- **Persistenz: JSON-Dateien**, eine pro Vorlage, unter
-  `%APPDATA%/de.listmaster.desktop/templates/`
+- **Persistenz: JSON-Dateien**, eine pro Vorlage bzw. gespeichertem Bogen,
+  unter `%APPDATA%/de.listmaster.desktop/templates/` und `.../sheets/`
 - **zod** fuer die Validierung beim Lesen
 - **Vitest** fuer die Domaenenlogik
 
@@ -18,16 +18,19 @@ zweites Build-Target vorgesehen, nicht als eigene Codebasis.
 
 ```
 src/lib/model/      reine Daten -- kein IO, kein Svelte, kein DOM
-src/lib/storage/    TemplateStore-Vertrag + austauschbare Adapter
-src/routes/         UI; kennt nur getStore() und das Modell
+src/lib/storage/    Store-Vertrag (Vorlagen, Boegen) + austauschbare Adapter
+src/lib/print/      Bogen, Datum, gespeicherte Boegen, Hoehenschaetzung -- ebenfalls ohne IO
+src/routes/         UI; kennt nur getStore()/getSheetStore() und das Modell
 src/styles/         app.css (Bildschirm), print.css (Papier)
 ```
 
 ### Die zwei Regeln, die das Design tragen
 
-**1. Persistenz laeuft ausschliesslich ueber `TemplateStore`.**
-Die UI importiert nie einen Adapter direkt, sondern nur `getStore()` aus
-`src/lib/storage/index.ts`. Der Vertrag ist durchgehend `async` und trennt
+**1. Persistenz laeuft ausschliesslich ueber `TemplateStore` / `SheetStore`.**
+Die UI importiert nie einen Adapter direkt, sondern nur `getStore()` bzw.
+`getSheetStore()` aus `src/lib/storage/index.ts`. Beide sind derselbe
+generische `DocumentStore`; die Adapter kennen nur Text und Dateinamen, Schema
+und Validierung kommen aus einem `DocumentCodec` (`codecs.ts`). Der Vertrag ist durchgehend `async` und trennt
 `list()` (Summaries) von `load()` (Volltext) -- genau deshalb laesst er sich
 spaeter von einem HTTP-Store gegen einen Server erfuellen, ohne dass eine
 einzige Route angefasst werden muss. Es gibt bereits zwei Adapter:
@@ -80,11 +83,21 @@ Abschnitt, dessen Punkte alle entfernt sind, faellt mit weg.
 `fitsInColumn` vor Zeilen, die gar nicht aufs Papier kommen.
 
 Hinter dem `.` steht das **Datum** (`src/lib/print/date.ts`), rechts in der
-Titelzeile, gedruckt als `17.09.26`. `heute` und `morgen` sind bewusst
-**keine festen Tage**, sondern werden erst beim Rendern aufgeloest: ein
-abgelegter Bogen druckt morgen das Datum von morgen. Ein fester Tag steht
-als ISO-Tag (`a.2026-09-17`). Gerechnet wird durchgehend in Ortszeit --
+Titelzeile, gedruckt als `Do 17.09.26`. `heute`, `morgen` und `in<n>`
+(`a.in3`, in drei Tagen -- kein `+`, das wuerde in der URL zum Leerzeichen)
+sind bewusst **keine festen Tage**, sondern werden erst beim Rendern
+aufgeloest: ein abgelegter Bogen druckt morgen das Datum von morgen, ein
+gespeicherter Wochenplan naechste Woche die Tage der naechsten Woche.
+`nextDay()` (Knopf `+1`) bleibt in derselben Art -- relativ bleibt relativ.
+Ein fester Tag steht als ISO-Tag (`a.2026-09-17`). Gerechnet wird durchgehend in Ortszeit --
 `toISOString()` waere falsch, es macht aus dem 17. abends den 16.
+
+**Gespeicherte Boegen** (`src/lib/print/saved-sheet.ts`) legen dieselbe
+Streifenfolge plus Spaltenzahl unter einem Namen ab. Die Datei haelt die
+Datums*wahl* in URL-Textform (`heute`, `in3`), nie den aufgeloesten Tag, und
+die Vorlagen nur per ID. In der Vorschau bindet `bogen=<id>` die URL an den
+gespeicherten Bogen; die URL bleibt Quelle der Wahrheit, der gespeicherte
+Stand dient nur dem Vergleich ("ungespeichert") und dem Zurueckschreiben.
 
 `.` und `*` als Trenner, weil `URLSearchParams` sie unkodiert stehen laesst
 (ein `!` stuende als `%21` in der Adresszeile) und weder UUIDs noch die

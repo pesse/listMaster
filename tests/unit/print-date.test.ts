@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  daysAhead,
   formatDay,
+  inDays,
+  nextDay,
+  weekday,
   isIsoDay,
   NO_DATE,
   parseDateChoice,
@@ -29,7 +33,7 @@ describe("parseDateChoice", () => {
   });
 
   it("ist zu serializeDateChoice rund", () => {
-    for (const raw of ["heute", "morgen", "2026-09-17"]) {
+    for (const raw of ["heute", "morgen", "in3", "2026-09-17"]) {
       expect(serializeDateChoice(parseDateChoice(raw))).toBe(raw);
     }
     expect(serializeDateChoice(NO_DATE)).toBe("");
@@ -64,8 +68,9 @@ describe("formatDay", () => {
 
 describe("printedDate", () => {
   it("ist das, was im Streifenkopf steht", () => {
-    expect(printedDate({ kind: "today" }, abends)).toBe("17.09.26");
-    expect(printedDate({ kind: "tomorrow" }, abends)).toBe("18.09.26");
+    expect(printedDate({ kind: "today" }, abends)).toBe("Do 17.09.26");
+    expect(printedDate({ kind: "tomorrow" }, abends)).toBe("Fr 18.09.26");
+    expect(printedDate({ kind: "later", days: 3 }, abends)).toBe("So 20.09.26");
     expect(printedDate(NO_DATE, abends)).toBeNull();
   });
 });
@@ -80,5 +85,50 @@ describe("toIsoDay / isIsoDay", () => {
     expect(isIsoDay("2026-09-17")).toBe(true);
     expect(isIsoDay("2026-13-01")).toBe(false);
     expect(isIsoDay("2026-9-7")).toBe(false);
+  });
+});
+
+describe("relative Tage", () => {
+  it("liest in<n> und ordnet 0 und 1 heute und morgen zu", () => {
+    expect(parseDateChoice("in3")).toEqual({ kind: "later", days: 3 });
+    expect(parseDateChoice("in0")).toEqual({ kind: "today" });
+    expect(parseDateChoice("in1")).toEqual({ kind: "tomorrow" });
+    expect(parseDateChoice("in")).toEqual(NO_DATE);
+    expect(parseDateChoice("in-2")).toEqual(NO_DATE);
+  });
+
+  it("loest relativ zum Drucktag auf -- ueber die Monatsgrenze", () => {
+    expect(resolveDay({ kind: "later", days: 14 }, abends)).toBe("2026-10-01");
+  });
+
+  it("zaehlt die Tage voraus", () => {
+    expect(daysAhead({ kind: "today" })).toBe(0);
+    expect(daysAhead(inDays(5))).toBe(5);
+    expect(daysAhead({ kind: "fixed", day: "2026-09-17" })).toBeNull();
+    expect(daysAhead(NO_DATE)).toBeNull();
+  });
+});
+
+describe("nextDay", () => {
+  it("bleibt relativ, damit ein Wochenplan wiederverwendbar ist", () => {
+    expect(nextDay({ kind: "today" })).toEqual({ kind: "tomorrow" });
+    expect(nextDay({ kind: "tomorrow" })).toEqual({ kind: "later", days: 2 });
+    expect(nextDay({ kind: "later", days: 6 })).toEqual({ kind: "later", days: 7 });
+  });
+
+  it("bleibt fest und springt ueber Monatsgrenzen", () => {
+    expect(nextDay({ kind: "fixed", day: "2026-09-30" })).toEqual({ kind: "fixed", day: "2026-10-01" });
+  });
+
+  it("laesst 'kein Datum' in Ruhe", () => {
+    expect(nextDay(NO_DATE)).toEqual(NO_DATE);
+  });
+});
+
+describe("weekday", () => {
+  it("nennt den Wochentag kurz", () => {
+    expect(weekday("2026-09-17")).toBe("Do");
+    expect(weekday("2026-09-20")).toBe("So");
+    expect(weekday("2026-09-21")).toBe("Mo");
   });
 });

@@ -1,43 +1,43 @@
-import type { ChecklistTemplate, TemplateId, TemplateSummary } from "../model/types";
-import { toSummary } from "../model/template";
-import { deserialize, serialize } from "./json";
-import type { TemplateStore } from "./types";
+import type { DocumentCodec, DocumentStore } from "./types";
 
 /**
  * localStorage-Store fuer `vite dev` im normalen Browser -- und zugleich
  * der Adapter, den eine spaetere PWA-Variante nutzen wuerde.
  */
-const PREFIX = "listmaster:template:";
 
-export function createBrowserStore(storage: Storage = localStorage): TemplateStore {
-  const keyFor = (id: TemplateId) => `${PREFIX}${id}`;
+export function createBrowserStore<Doc extends { id: string; name: string }, Summary extends { name: string }>(
+  codec: DocumentCodec<Doc, Summary>,
+  storage: Storage = localStorage,
+): DocumentStore<Doc, Summary> {
+  const prefix = codec.keyPrefix;
+  const keyFor = (id: string) => `${prefix}${id}`;
 
   return {
-    async list(): Promise<TemplateSummary[]> {
-      const summaries: TemplateSummary[] = [];
+    async list(): Promise<Summary[]> {
+      const summaries: Summary[] = [];
       for (let i = 0; i < storage.length; i++) {
         const key = storage.key(i);
-        if (!key?.startsWith(PREFIX)) continue;
+        if (!key?.startsWith(prefix)) continue;
         try {
-          summaries.push(toSummary(deserialize(storage.getItem(key) ?? "", key)));
+          summaries.push(codec.toSummary(codec.deserialize(storage.getItem(key) ?? "", key)));
         } catch (error) {
-          console.error(`Vorlage ${key} uebersprungen:`, error);
+          console.error(`${codec.label} ${key} uebersprungen:`, error);
         }
       }
       return summaries.sort((a, b) => a.name.localeCompare(b.name, "de"));
     },
 
-    async load(id: TemplateId): Promise<ChecklistTemplate | null> {
+    async load(id: string): Promise<Doc | null> {
       const text = storage.getItem(keyFor(id));
-      return text === null ? null : deserialize(text, keyFor(id));
+      return text === null ? null : codec.deserialize(text, keyFor(id));
     },
 
-    async save(template: ChecklistTemplate): Promise<ChecklistTemplate> {
-      storage.setItem(keyFor(template.id), serialize(template));
-      return template;
+    async save(doc: Doc): Promise<Doc> {
+      storage.setItem(keyFor(doc.id), codec.serialize(doc));
+      return doc;
     },
 
-    async remove(id: TemplateId): Promise<void> {
+    async remove(id: string): Promise<void> {
       storage.removeItem(keyFor(id));
     },
   };

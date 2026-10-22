@@ -16,22 +16,31 @@ vorgesehen.
   hat einen Rahmen, der zugleich die Schnittlinie ist, und wird nie ueber
   Spalten oder Seiten umbrochen.
 - **Je Streifen einstellbar**, ohne die Vorlage zu aendern:
-  - Datum im Kopf -- `heute` (Standard), `morgen`, ein fester Tag oder keins.
-    `heute`/`morgen` werden erst beim Drucken aufgeloest.
+  - Datum im Kopf mit Wochentag (`Mo 13.10.26`) -- `heute` (Standard),
+    `morgen`, `in n Tagen`, ein fester Tag oder keins. Die relativen Angaben
+    werden erst beim Drucken aufgeloest.
+  - `+1` kopiert einen Streifen fuer den Folgetag -- so entsteht eine Woche.
   - ganze Abschnitte und einzelne Punkte direkt in der Vorschau entfernen
     (✕ beim Ueberfahren von Titel bzw. Punkt)
 - **Warnung**, wenn eine Liste zu lang fuer eine Spalte ist.
-- **Bogen als Lesezeichen**: Die komplette Zusammenstellung steht in der
-  URL und laesst sich jederzeit wieder aufrufen, z. B.
-  `/print?ids=<vorlage>.heute*<abschnitt>,<vorlage>&cols=3`.
+- **Boegen speichern**: Eine Zusammenstellung -- etwa ein Wochenplan --
+  laesst sich unter einem Namen ablegen, aus der Uebersicht wieder oeffnen,
+  anpassen und erneut speichern. Mit relativen Daten druckt derselbe
+  Wochenplan jede Woche die richtigen Tage.
+- **Bogen als Lesezeichen**: Die komplette Zusammenstellung steht ausserdem
+  in der URL, z. B. `/print?ids=<vorlage>.heute*<abschnitt>,<vorlage>.in2&cols=3`.
 
 ## Daten
 
-Jede Vorlage ist eine eigene JSON-Datei unter
+Jede Vorlage und jeder gespeicherte Bogen ist eine eigene JSON-Datei unter
 
 ```
 %APPDATA%\de.listmaster.desktop\templates\
+%APPDATA%\de.listmaster.desktop\sheets\
 ```
+
+Ein Bogen verweist auf seine Vorlagen per ID; aendert sich eine Vorlage,
+druckt der Bogen die neue Fassung.
 
 Die Dateien werden beim Lesen validiert. Sie lassen sich also von Hand
 bearbeiten oder kopieren; eine kaputte Datei wird uebersprungen, statt
@@ -67,13 +76,13 @@ Ein anderes Verzeichnis laesst sich ueber `LISTMASTER_TEMPLATES` setzen.
 
 ```
 src/lib/model/      Datenmodell und Regeln -- ohne IO, Svelte oder DOM
-src/lib/storage/    TemplateStore-Vertrag + Adapter (Tauri-Dateien, localStorage)
+src/lib/storage/    Store-Vertrag + Adapter (Tauri-Dateien, localStorage)
 src/lib/print/      Bogen, Datum und Hoehenschaetzung fuer den Streifendruck
 src/routes/         Oberflaeche
 src/styles/         app.css (Bildschirm), print.css (Papier)
 ```
 
-Die Oberflaeche spricht nur ueber `getStore()` mit der Ablage; ein
+Die Oberflaeche spricht nur ueber `getStore()` / `getSheetStore()` mit der Ablage; ein
 weiterer Adapter (etwa gegen einen Server) laesst sich einhaengen, ohne
 eine Route anzufassen. Details zu den Designentscheidungen stehen in
 [`CLAUDE.md`](CLAUDE.md).
