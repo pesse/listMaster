@@ -1,0 +1,109 @@
+name: Release
+
+# Baut & signiert ein Windows-Release und hängt Installer + latest.json an ein
+# in GitHub veröffentlichtes Release. Auslöser: ein Release wird publiziert.
+# Die Release-Beschreibung (UI) landet im notes-Feld von latest.json (Update-Hinweis).
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Genau den getaggten Stand des Releases bauen.
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: App-Version aus Release-Tag setzen
+        shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          # Der Release-Tag (vX.Y.Z) ist die einzige Quelle der Wahrheit für die
+          # App-Version — verhindert vergessene/abweichende Bumps in den Config-Dateien.
+          VERSION="${TAG#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-].+)?$ ]]; then
+            echo "::error::Tag '$TAG' ergibt keine gültige Version ('$VERSION')."
+            exit 1
+          fi
+          echo "Setze App-Version auf $VERSION"
+          tmp=$(mktemp)
+          jq --arg v "$VERSION" '.version = $v' src-tauri/tauri.conf.json > "$tmp" && mv "$tmp" src-tauri/tauri.conf.json
+          jq --arg v "$VERSION" '.version = $v' package.json > "$tmp" && mv "$tmp" package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build, sign & attach to release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          # An das bestehende, ausgelöste Release hängen (statt ein neues anzulegen).
+          releaseId: ${{ github.event.release.id }}
+          tagName: ${{ github.event.release.tag_name }}
+          # Beschreibung aus dem GitHub-Release → notes-Feld in latest.json.
+          releaseBody: ${{ github.event.release.body }}
+          # latest.json wird standardmäßig erzeugt und hochgeladen (includeUpdaterJson).
+
+  # Schreibt die freigegebene Tag-Version zurück in den Default-Branch, damit die
+  # committeten Versionsfelder nicht hinter den Releases zurückbleiben. Läuft erst
+  # nach erfolgreichem Build; ein fehlgeschlagener Push lässt das Release unberührt.
+  version-bump:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Tag-Version in den Default-Branch committen
+        shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          VERSION="${TAG#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-].+)?$ ]]; then
+            echo "::error::Tag '$TAG' ergibt keine gültige Version ('$VERSION')."
+            exit 1
+          fi
+          tmp=$(mktemp)
+          jq --arg v "$VERSION" '.version = $v' src-tauri/tauri.conf.json > "$tmp" && mv "$tmp" src-tauri/tauri.conf.json
+          # Aktualisiert package.json UND package-lock.json, ohne Git-Tag/Commit anzulegen.
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          if git diff --quiet; then
+            echo "Version $VERSION ist bereits committet — nichts zu tun."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src-tauri/tauri.conf.json package.json package-lock.json
+          git commit -m "chore: Version $VERSION (Release-Bump) [skip ci]"
+          git push origin "HEAD:$BRANCH"

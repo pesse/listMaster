@@ -37,6 +37,18 @@
     ],
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA5QkI3QTEzOUJGQ0M3MUQKUldRZHgveWJFM3E3Q1FPcGNyZXB5Nk52alVuYW9OZW43WndQWk0ycWJVajV5T2FncmJrcHBPcGMK",
+      "endpoints": [
+        "https://github.com/pesse/listMaster/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

@@ -165,6 +165,32 @@ Linux-Target gegen webkit2gtk und sagt ueber den Windows-Build nichts aus.
 Aenderungen unter `src-tauri/` brauchen einen vollen Rust-Neubau, Hot-Reload
 deckt nur die Svelte-Seite ab.
 
+## Releases
+
+Ausgeloest wird durch ein **veroeffentlichtes** GitHub-Release, nicht durch
+einen Tag-Push: `.github/workflows/release.yml` haengt an `release: published`.
+Ein Tag allein startet nichts, ein Entwurf auch nicht. Also: Tag `vX.Y.Z`
+pushen, darauf ein Release anlegen **und veroeffentlichen**. Der Workflow baut
+den getaggten Stand auf `windows-latest`, haengt den signierten Installer und
+`latest.json` an genau dieses Release und committet danach die Version in den
+Default-Branch (`chore: Version X.Y.Z (Release-Bump)`).
+
+Der Tag ist die einzige Quelle der Version -- **nie von Hand bumpen** -- und
+muss ueber dem letzten veroeffentlichten liegen, sonst bietet der Updater ihn
+nicht an. Die Release-Beschreibung wird zum `notes`-Feld in `latest.json` und
+steht im Update-Hinweis der App (`src/routes/+layout.svelte`): fuer Nutzer,
+deutsch, kein Changelog-Dump.
+
+Signiert wird mit einem minisign-Schluessel: der oeffentliche steht in
+`tauri.conf.json` (`plugins.updater.pubkey`), der private und sein Passwort
+liegen als Secrets `TAURI_SIGNING_PRIVATE_KEY` / `_PASSWORD` im Repo --
+**den privaten Schluessel nie committen**. Geht er verloren, koennen
+installierte Apps keine Updates mehr annehmen.
+
+Updater und `process` sind nur auf dem Desktop eingebunden (`#[cfg(desktop)]`,
+eigene Capability `desktop.json`) -- Android aktualisiert ueber den Store.
+Im Dev-Build und im Browser prueft `src/lib/update.ts` gar nicht erst.
+
 ## Konventionen
 
 - Domaenenlogik bleibt frei von Svelte und Tauri, damit sie ohne Browser

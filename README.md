@@ -87,11 +87,21 @@ weiterer Adapter (etwa gegen einen Server) laesst sich einhaengen, ohne
 eine Route anzufassen. Details zu den Designentscheidungen stehen in
 [`CLAUDE.md`](CLAUDE.md).
 
+## Installation
+
+Den Windows-Installer (`ListMaster_x.y.z_x64-setup.exe`) gibt es unter
+[Releases](https://github.com/pesse/listMaster/releases/latest). Die App
+prueft beim Start, ob eine neuere Version vorliegt, und bietet das Update an.
+
 ## Build
 
 ```bash
 npm run tauri build    # MSI/NSIS-Installer unter src-tauri/target/release/bundle/
 ```
+
+Ein lokaler Build braucht dafuer den Signierschluessel in
+`TAURI_SIGNING_PRIVATE_KEY` (+ `_PASSWORD`), weil `createUpdaterArtifacts`
+an ist. Releases baut ohnehin GitHub Actions, siehe `CLAUDE.md`.
 
 ## Ausblick
 
