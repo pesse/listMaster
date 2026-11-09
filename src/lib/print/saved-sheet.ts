@@ -25,6 +25,8 @@ const storedStripSchema = z.object({
   templateId: z.string().min(1),
   date: z.string().transform((raw) => parseDateChoice(raw)),
   hidden: z.array(z.string()),
+  /** Fehlt in Boegen, die vor den Zusatzzeilen gespeichert wurden. */
+  extra: z.array(z.string()).default([]),
 });
 
 export const savedSheetSchema = z.object({
@@ -110,5 +112,5 @@ export function toStoredSheet(sheet: SavedSheet): unknown {
 }
 
 function copyStrips(strips: StripSpec[]): StripSpec[] {
-  return strips.map((strip) => ({ ...strip, hidden: [...strip.hidden] }));
+  return strips.map((strip) => ({ ...strip, hidden: [...strip.hidden], extra: [...strip.extra] }));
 }

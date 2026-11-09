@@ -13,7 +13,7 @@ import { StorageError } from "../../src/lib/storage/types";
 const woche: StripSpec[] = [
   createStrip("a"),
   createStrip("a", { kind: "tomorrow" }),
-  { templateId: "a", date: { kind: "later", days: 2 }, hidden: ["s1", "i7"] },
+  { templateId: "a", date: { kind: "later", days: 2 }, hidden: ["s1", "i7"], extra: [] },
   createStrip("b", { kind: "none" }),
   createStrip("b", { kind: "fixed", day: "2026-09-17" }),
 ];
@@ -99,5 +99,17 @@ describe("deserializeSheet", () => {
     const read = deserializeSheet(JSON.stringify(stored));
     expect(read.columns).toBe(3);
     expect(read.strips[0].date).toEqual({ kind: "none" });
+  });
+});
+
+describe("Zusatzzeilen im gespeicherten Bogen", () => {
+  it("bleiben erhalten und fehlen in alten Dateien nicht als Fehler", () => {
+    const strips = [{ ...createStrip("a"), extra: ["Brot"] }];
+    const sheet = createSavedSheet("x", strips, 3);
+    expect(deserializeSheet(serializeSheet(sheet)).strips[0].extra).toEqual(["Brot"]);
+
+    const old = JSON.parse(serializeSheet(sheet));
+    delete old.strips[0].extra;
+    expect(deserializeSheet(JSON.stringify(old)).strips[0].extra).toEqual([]);
   });
 });

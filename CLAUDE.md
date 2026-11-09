@@ -82,6 +82,14 @@ Abschnitt, dessen Punkte alle entfernt sind, faellt mit weg.
 `visibleTemplate()` liefert die gedruckte Fassung -- Rendern *und* Hoehenschaetzung arbeiten darauf, sonst warnte
 `fitsInColumn` vor Zeilen, die gar nicht aufs Papier kommen.
 
+**Zusatzzeilen** (`*_Brot`) sind einmalige Punkte nur fuer diesen Streifen --
+Basisliste plus Zusaetze fuer einen Tag. Sie stehen als Klartext hinter `*_`
+(UUIDs beginnen nie mit `_`; im Text sind nur `%`, `,` und `*` maskiert) und
+kommen nie in die Vorlage. `visibleTemplate()` haengt sie als eigenen
+Abschnitt `zusatz` ans Ende, mit Ueberschrift "Zusaetzlich" nur, wenn der
+Abschnitt davor eine hat. Das ✕ loescht sie (`removeFromStrip`), statt sie
+auszublenden.
+
 Hinter dem `.` steht das **Datum** (`src/lib/print/date.ts`), rechts in der
 Titelzeile, gedruckt als `Do 17.09.26`. `heute`, `morgen` und `in<n>`
 (`a.in3`, in drei Tagen -- kein `+`, das wuerde in der URL zum Leerzeichen)

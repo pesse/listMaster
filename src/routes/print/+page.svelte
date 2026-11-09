@@ -10,10 +10,12 @@
     type ColumnCount,
   } from "$lib/print/layout";
   import {
+    addExtra,
     createStrip,
     hiddenItems,
     isHidden,
     parseStrips,
+    removeFromStrip,
     serializeStrips,
     setDate,
     toggleHidden,
@@ -202,6 +204,7 @@
       ...original,
       date: forNextDay ? nextDay(original.date) : original.date,
       hidden: [...original.hidden],
+      extra: [...original.extra],
     };
     const next = [...strips];
     next.splice(index + 1, 0, copy);
@@ -226,6 +229,18 @@
    */
   function toggleOnStrip(index: number, id: SectionId | ItemId) {
     updateStrip(index, (strip) => toggleHidden(strip, id));
+  }
+
+  /** ✕ in der Vorschau: Zusatzzeilen loeschen, Vorlagenpunkte ausblenden. */
+  function dropFromStrip(index: number, id: SectionId | ItemId) {
+    updateStrip(index, (strip) => removeFromStrip(strip, id));
+  }
+
+  /** Eine einmalige Zeile nur fuer diesen Streifen -- die Vorlage bleibt, wie sie ist. */
+  function addLine(index: number, input: HTMLInputElement) {
+    if (!input.value.trim()) return;
+    updateStrip(index, (strip) => addExtra(strip, input.value));
+    input.value = "";
   }
 
   function chooseDateKind(index: number, kind: string) {
@@ -417,6 +432,24 @@
               </div>
             {/if}
           {/if}
+
+          {#if template}
+            <form
+              class="toolbar add-line"
+              onsubmit={(e) => {
+                e.preventDefault();
+                addLine(index, e.currentTarget.elements.namedItem("line") as HTMLInputElement);
+              }}
+            >
+              <input
+                name="line"
+                placeholder="Zeile nur fuer diesen Streifen, z. B. Brot"
+                title="einmaliger Zusatz -- die Vorlage bleibt unveraendert"
+                style="flex:1"
+              />
+              <button type="submit">+ Zeile</button>
+            </form>
+          {/if}
         </div>
       {/each}
     {/if}
@@ -443,7 +476,7 @@
                 <button
                   class="drop no-print"
                   title="Abschnitt nur von diesem Streifen entfernen"
-                  onclick={() => toggleOnStrip(index, section.id)}>✕</button
+                  onclick={() => dropFromStrip(index, section.id)}>✕</button
                 >
               </h2>
             {/if}
@@ -458,7 +491,7 @@
                   <button
                     class="drop no-print"
                     title="nur von diesem Streifen entfernen"
-                    onclick={() => toggleOnStrip(index, item.id)}>✕</button
+                    onclick={() => dropFromStrip(index, item.id)}>✕</button
                   >
                 </li>
               {/each}
